@@ -1,0 +1,35 @@
+#!/usr/bin/env php
+<?php
+
+$composerAutoload = [
+    __DIR__ . '/../../autoload.php',
+    __DIR__ . '/vendor/autoload.php'
+];
+
+$vendorPath = null;
+foreach ($composerAutoload as $autoload) {
+    if (file_exists($autoload)) {
+        require($autoload);
+        $vendorPath = dirname($autoload);
+        break;
+    }
+}
+
+try {
+    $dotenv = new Dotenv\Dotenv(__DIR__ . DIRECTORY_SEPARATOR . 'env');
+    $dotenv->load();
+} catch (Exception $ex) {
+    print ('No environment file. Continuing...');
+}
+
+require($vendorPath . '/yiisoft/yii2/Yii.php');
+
+$config = require(__DIR__ . "/config/console.php");
+$config['aliases']['@vendor'] = $vendorPath;
+
+// Set default timezone
+date_default_timezone_set("UTC");
+
+$application = new yii\console\Application($config);
+$exitCode = $application->run();
+exit($exitCode);

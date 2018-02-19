@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="fbn-db-migrations" default="build">
+    <property name="phpcpd" value="${basedir}/vendor/bin/phpcpd"/>
+    <property name="phpcs" value="${basedir}/vendor/bin/phpcs"/>
+    <property name="phpdox" value="${basedir}/vendor/bin/phpdox"/>
+    <property name="phploc" value="${basedir}/vendor/bin/phploc"/>
+    <property name="phpmd" value="${basedir}/vendor/bin/phpmd"/>
+    <property environment="env"/>
+    <property name="db.username" value="${env.DB_USERNAME}"/>
+    <property name="db.name" value="${env.DB_NAME}"/>
+    <property name="db.password" value="${env.DB_PASSWORD}"/>
+    <property name="db.host" value="${env.DB_HOST}"/>
+
+    <target name="build"
+            depends="prepare,static-analysis,migrations"
+            description="Performs static analysis and without running the tests"/>
+
+    <target name="full-build"
+            depends="prepare,static-analysis,migrations"
+            description="Performs static analysis and runs the tests"/>
+
+    <target name="full-build-parallel"
+            depends="prepare,static-analysis-parallel,migrations"
+            description="Performs static analysis (executing the tools in parallel) and runs the tests"/>
+
+    <target name="quick-build"
+            depends="prepare,lint"
+            description="Performs a lint check and runs the tests (without generating code coverage reports)"/>
+
+    <target name="static-analysis"
+            depends="lint,phploc-ci,phpmd-ci,phpcs-ci"
+            description="Performs static analysis"/>
+
+
+    <!-- Adjust the threadCount attribute's value to the number of CPUs -->
+    <target name="static-analysis-parallel"
+            description="Performs static analysis (executing the tools in parallel)">
+        <parallel threadCount="2">
+            <sequential>
+                <antcall target="phpmd-ci"/>
+            </sequential>
+            <antcall target="lint"/>
+            <antcall target="phpcpd-ci"/>
+            <antcall target="phpcs-ci"/>
+            <antcall target="phploc-ci"/>
+        </parallel>
+    </target>
+
+    <target name="clean"
+            unless="clean.done"
+            description="Cleanup build artifacts">
+        <delete dir="${basedir}/build/api"/>
+        <delete dir="${basedir}/build/coverage"/>
+        <delete dir="${basedir}/build/logs"/>
+        <delete dir="${basedir}/build/phpdox"/>
+        <property name="clean.done" value="true"/>
+    </target>
+
+    <target name="prepare"
+            unless="prepare.done"
+            depends="clean"
+            description="Prepare for build">
+        <mkdir dir="${basedir}/build/api"/>
+        <mkdir dir="${basedir}/build/coverage"/>
+        <mkdir dir="${basedir}/build/logs"/>
+        <mkdir dir="${basedir}/build/phpdox"/>
+        <property name="prepare.done" value="true"/>
+    </target>
+
+    <target name="lint"
+            unless="lint.done"
+            description="Perform syntax check of sourcecode files">
+        <apply executable="php" taskname="lint" failonerror="true">
+            <arg value="-l"/>
+            <fileset dir="${basedir}">
+                <include name="migrations/*.php"/>
+                <include name="interfaces/*.php"/>
+                <include name="libs/*.php"/>
+                <include name="config/*.php"/>
+            </fileset>
+        </apply>
+
+        <property name="lint.done" value="true"/>
+    </target>
+
+    <target name="phploc"
+            unless="phploc.done"
+            description="Measure project size using PHPLOC and print human readable output. Intended for usage on the command line.">
+        <exec executable="${phploc}" taskname="phploc">
+            <arg value="--count-tests"/>
+            <arg path="${basedir}/migrations"/>
+            <arg path="${basedir}/interfaces"/>
+            <arg path="${basedir}/libs"/>
+            <arg path="${basedir}/config"/>
+        </exec>
+
+        <property name="phploc.done" value="true"/>
+    </target>
+
+    <target name="phploc-ci"
+            unless="phploc.done"
+            depends="prepare"
+            description="Measure project size using PHPLOC and log result in CSV and XML format. Intended for usage within a continuous integration environment.">
+        <exec executable="${phploc}" taskname="phploc">
+            <arg value="--count-tests"/>
+            <arg value="--log-csv"/>
+            <arg path="${basedir}/build/logs/phploc.csv"/>
+            <arg value="--log-xml"/>
+            <arg path="${basedir}/build/logs/phploc.xml"/>
+            <arg path="${basedir}/migrations"/>
+            <arg path="${basedir}/interfaces"/>
+            <arg path="${basedir}/libs"/>
+            <arg path="${basedir}/config"/>
+        </exec>
+
+        <property name="phploc.done" value="true"/>
+    </target>
+
+    <target name="phpmd"
+            unless="phpmd.done"
+            description="Perform project mess detection using PHPMD and print human readable output. Intended for usage on the command line before committing.">
+        <exec executable="${phpmd}" taskname="phpmd">
+            <arg path="${basedir}/migrations"/>
+            <arg path="${basedir}/interfaces"/>
+            <arg path="${basedir}/libs"/>
+            <arg path="${basedir}/config"/>
+            <arg value="text"/>
+            <arg path="${basedir}/build/phpmd.xml"/>
+        </exec>
+
+        <property name="phpmd.done" value="true"/>
+    </target>
+
+    <target name="phpmd-ci"
+            unless="phpmd.done"
+            depends="prepare"
+            description="Perform project mess detection using PHPMD and log result in XML format. Intended for usage within a continuous integration environment.">
+        <exec executable="${phpmd}" taskname="phpmd">
+            <arg path="${basedir}/migrations,${basedir}/interfaces,${basedir}/libs,${basedir}/config"/>
+            <arg value="xml"/>
+            <arg path="${basedir}/build/phpmd.xml"/>
+            <arg value="--reportfile"/>
+            <arg path="${basedir}/build/logs/pmd.xml"/>
+        </exec>
+
+        <property name="phpmd.done" value="true"/>
+    </target>
+
+    <target name="phpcs"
+            unless="phpcs.done"
+            description="Find coding standard violations using PHP_CodeSniffer and print human readable output. Intended for usage on the command line before committing.">
+        <exec executable="${phpcs}" taskname="phpcs">
+            <arg value="--standard=PSR2"/>
+            <arg value="--extensions=php"/>
+            <arg value="--ignore=autoload.php"/>
+            <arg path="${basedir}/interfaces"/>
+            <arg path="${basedir}/libs"/>
+            <arg path="${basedir}/config"/>
+        </exec>
+
+        <property name="phpcs.done" value="true"/>
+    </target>
+
+    <target name="phpcs-ci"
+            unless="phpcs.done"
+            depends="prepare"
+            description="Find coding standard violations using PHP_CodeSniffer and log result in XML format. Intended for usage within a continuous integration environment.">
+        <exec executable="${phpcs}" output="/dev/null" taskname="phpcs">
+            <arg value="--report=checkstyle"/>
+            <arg value="--report-file=${basedir}/build/logs/checkstyle.xml"/>
+            <arg value="--standard=PSR2"/>
+            <arg value="--extensions=php"/>
+            <arg value="--ignore=autoload.php"/>
+            <arg path="${basedir}/interfaces"/>
+            <arg path="${basedir}/libs"/>
+            <arg path="${basedir}/config"/>
+        </exec>
+
+        <property name="phpcs.done" value="true"/>
+    </target>
+
+    <target name="delete_db">
+        <exec executable="mysqladmin">
+            <arg value="--user=${db.username}"/>
+            <arg value="--password=${db.password}"/>
+            <arg value="--force"/>
+            <arg value="drop"/>
+            <arg value="${db.name}"/>
+        </exec>
+    </target>
+
+    <target name="create_db">
+        <exec executable="mysqladmin">
+            <arg value="--user=${db.username}"/>
+            <arg value="--password=${db.password}"/>
+            <arg value="--force"/>
+            <arg value="create"/>
+            <arg value="${db.name}"/>
+        </exec>
+    </target>
+
+    <target name="user-auth-migrations" description="Run CottaCush User Auth Migrations">
+        <exec executable="php" failonerror="true" failifexecutionfails="true">
+            <env key="DB_HOST" value="${db.host}"/>
+            <env key="DB_NAME" value="${db.name}"/>
+            <env key="DB_USERNAME" value="${db.username}"/>
+            <env key="DB_PASSWORD" value="${db.password}"/>
+            <arg value="${basedir}/yii"/>
+            <arg value="migrate/up"/>
+            <arg value="--migrationPath=@vendor/cottacush/yii2-user-auth/migrations"/>
+            <arg value="--interactive=0"/>
+        </exec>
+    </target>
+
+    <target name="cottacush-rbac-migrations" description="Run CottaCush RBAC Migrations">
+        <exec executable="php" failonerror="true" failifexecutionfails="true">
+            <env key="DB_HOST" value="${db.host}"/>
+            <env key="DB_NAME" value="${db.name}"/>
+            <env key="DB_USERNAME" value="${db.username}"/>
+            <env key="DB_PASSWORD" value="${db.password}"/>
+            <arg value="${basedir}/yii"/>
+            <arg value="migrate/up"/>
+            <arg value="--migrationPath=@vendor/cottacush/yii2-permissions-ext/migrations"/>
+            <arg value="--interactive=0"/>
+        </exec>
+    </target>
+
+    <target name="run-fbn-migrations" description="Run FBN Migrations">
+        <exec executable="php" failonerror="true" failifexecutionfails="true">
+            <env key="DB_HOST" value="${db.host}"/>
+            <env key="DB_NAME" value="${db.name}"/>
+            <env key="DB_USERNAME" value="${db.username}"/>
+            <env key="DB_PASSWORD" value="${db.password}"/>
+            <arg value="${basedir}/yii"/>
+            <arg value="migrate/up"/>
+            <arg value="--interactive=0"/>
+        </exec>
+    </target>
+
+    <target name="seed-database" description="Seed Database">
+        <exec executable="php" failonerror="true" failifexecutionfails="true">
+            <arg value="${basedir}/yii"/>
+            <arg value="seeder/seed-all"/>
+        </exec>
+    </target>
+
+    <target name="seed-oauth-creds" description="Seed OAuth Credentials">
+        <exec executable="php" failonerror="true" failifexecutionfails="true">
+            <arg value="${basedir}/yii"/>
+            <arg value="seeder/seed-oauth-client-from-environment-variables"/>
+        </exec>
+    </target>
+
+    <target name="seed-admin-user" description="Seed Admin Credentials">
+        <exec executable="php" failonerror="true" failifexecutionfails="true">
+            <arg value="${basedir}/yii"/>
+            <arg value="seeder/admin-user"/>
+        </exec>
+    </target>
+</project>
