@@ -28,7 +28,7 @@ before_script:
 
 script:
   - vendor/bin/phpcs --standard=psr2 libs/
-  - vendor/bin/phpunit --coverage-text --coverage-clover build/logs/clover.xml
+  - vendor/bin/phpunit --coverage-text --coverage-clover=.build/logs/clover.xml
 
 after_success:
   - sh -c 'php vendor/bin/coveralls -v'
