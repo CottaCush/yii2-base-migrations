@@ -37,7 +37,10 @@ class Utils
      */
     public static function getRandomNigerianPhoneNumber(Generator $faker): string
     {
-        return '+234' . $faker->numberBetween(7, 9) . $faker->numberBetween(0, 1) . $faker->numberBetween(10000000, 99999999);
+        return '+234' .
+            $faker->numberBetween(7, 9) .
+            $faker->numberBetween(0, 1) .
+            $faker->numberBetween(10000000, 99999999);
     }
 
     /**

@@ -48,8 +48,15 @@ class BaseMigration extends Migration
     /**
      * @inheritdoc
      */
-    public function addForeignKey($name, $table, $columns, $refTable, $refColumns = 'id', $delete = null, $update = null)
-    {
+    public function addForeignKey(
+        $name,
+        $table,
+        $columns,
+        $refTable,
+        $refColumns = 'id',
+        $delete = null,
+        $update = null
+    ) {
         $refColumnsName = is_array($refColumns) ? implode('_', $refColumns) : $refColumns;
         $columnsName = is_array($columns) ? implode('_', $columns) : $columns;
 
