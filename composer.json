@@ -4,22 +4,22 @@
   "keywords": ["yii2", "framework", "basic", "project template", "improved", "migrations", "database"],
   "type": "library",
   "require": {
-    "php": ">=5.5.0",
-    "yiisoft/yii2": ">=2.0.8",
+    "php": "~8.0",
+    "yiisoft/yii2": "~2.0.40",
     "vlucas/phpdotenv": "^2.4",
     "fightbulc/moment": "*",
-    "fzaninotto/faker": "^1.6",
-    "cottacush/yii2-utils": "^2.0"
+    "fakerphp/faker": "^1.13",
+    "cottacush/yii2-utils": "^3.0",
+    "squizlabs/php_codesniffer": "^3.5"
   },
   "require-dev": {
     "yiisoft/yii2-faker": "*",
-    "squizlabs/php_codesniffer": "2.*",
     "pdepend/pdepend": "2.2.4",
     "phploc/phploc": "*",
     "phpmd/phpmd": "@stable",
     "sebastian/phpcpd": "*",
     "theseer/phpdox": "*",
-    "phpunit/phpunit": "4.8"
+    "phpunit/phpunit": "^9.0"
   },
   "autoload": {
     "psr-4": {
