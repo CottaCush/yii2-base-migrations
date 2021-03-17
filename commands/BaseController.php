@@ -7,8 +7,11 @@ use CottaCush\Yii2\Date\DateUtils;
 use dbmigrations\constants\MigrationConstants;
 use dbmigrations\libs\Utils;
 use Faker\Factory;
+use Faker\Generator;
 use Yii;
+use yii\base\InvalidRouteException;
 use yii\base\Module;
+use yii\console\Exception;
 use yii\db\Query;
 use yii\helpers\BaseInflector;
 
@@ -21,10 +24,16 @@ class BaseController extends BaseConsoleController
 {
     const DEFAULT_NUMBER_OF_ROWS = 10;
 
-    public $faker;
-    public $now;
-    public $actorId;
+    public Generator $faker;
+    public string $now;
+    public int $actorId;
 
+    /**
+     * BaseController constructor.
+     * @param $id
+     * @param Module $module
+     * @param array $config
+     */
     public function __construct($id, Module $module, array $config = [])
     {
         parent::__construct($id, $module, $config);
@@ -34,14 +43,16 @@ class BaseController extends BaseConsoleController
 
     /**
      * Helps to link actions and
-     * @author Olawale Lawal <wale@cottacush.com>
      * @param $table
      * @param $column
      * @param $action
      * @param array $conditions
      * @param string $returnType
-     * @param string $controller
+     * @param null $controller
      * @return mixed
+     * @throws InvalidRouteException
+     * @throws Exception
+     * @author Olawale Lawal <wale@cottacush.com>
      */
     public function dependsOn(
         $table,
@@ -50,7 +61,7 @@ class BaseController extends BaseConsoleController
         $conditions = [],
         $returnType = 'scalar',
         $controller = null
-    )
+    ): mixed
     {
         $records = (new Query)->from($table)->select($column)->andFilterWhere($conditions);
 
@@ -77,7 +88,7 @@ class BaseController extends BaseConsoleController
         $password,
         $userTypedId,
         $status = MigrationConstants::VALUE_ACTIVE
-    )
+    ): string
     {
         $this->insert(MigrationConstants::TABLE_USER_CREDENTIALS, [
             'identifier' => $identifier,
@@ -114,12 +125,12 @@ class BaseController extends BaseConsoleController
     }
 
     /**
-     * @author Adeyemi Olaoye <yemi@cottacush.com>
      * @param $tableName
      * @param int $noOfRecords
      * @param array $extraData
+     * @author Adeyemi Olaoye <yemi@cottacush.com>
      */
-    public function seedUniqueLOVs($tableName, $noOfRecords, $extraData = [])
+    public function seedUniqueLOVs($tableName, int $noOfRecords, $extraData = [])
     {
         $names = Utils::getUniqueNames($noOfRecords, $this->faker);
 
@@ -152,7 +163,7 @@ class BaseController extends BaseConsoleController
      * @param array $commonData
      * @return int
      */
-    public function batchInsert($table, array $columns, array $rows, $commonData = [])
+    public function batchInsert($table, array $columns, array $rows, $commonData = []): int
     {
         foreach ($rows as &$row) {
             $row = array_merge($row, $commonData);
@@ -169,7 +180,7 @@ class BaseController extends BaseConsoleController
      * @param array $otherConditions
      * @return false|null|string
      */
-    public function getIdFromColumn($table, $value, $column = 'key', array $otherConditions = [])
+    public function getIdFromColumn($table, $value, $column = 'key', array $otherConditions = []): bool|string|null
     {
         $conditions = array_merge([$column => $value], $otherConditions);
         return (new Query)->from($table)->select('id')

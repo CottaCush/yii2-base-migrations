@@ -17,7 +17,7 @@ class Utils
      * @param $csvFile
      * @return array
      */
-    public static function readCSV($csvFile)
+    public static function readCSV($csvFile): array
     {
         ini_set('auto_detect_line_endings', true);
         $line_of_text = [];
@@ -35,9 +35,12 @@ class Utils
      * @param Generator $faker
      * @return string
      */
-    public static function getRandomNigerianPhoneNumber(Generator $faker)
+    public static function getRandomNigerianPhoneNumber(Generator $faker): string
     {
-        return '+234' . $faker->numberBetween(7, 9) . $faker->numberBetween(0, 1) . $faker->numberBetween(10000000, 99999999);
+        return '+234' .
+            $faker->numberBetween(7, 9) .
+            $faker->numberBetween(0, 1) .
+            $faker->numberBetween(10000000, 99999999);
     }
 
     /**
@@ -47,7 +50,7 @@ class Utils
      * @param Generator $faker
      * @return array
      */
-    public static function getUniqueNames($length, Generator $faker)
+    public static function getUniqueNames(int $length, Generator $faker): array
     {
         $names = [];
 

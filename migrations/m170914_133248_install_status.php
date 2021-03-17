@@ -1,19 +1,23 @@
 <?php
 
+use dbmigrations\constants\MigrationConstants;
 use dbmigrations\libs\BaseMigration;
 
+/**
+ * Class m170914_133248_install_status
+ */
 class m170914_133248_install_status extends BaseMigration
 {
-    public function up()
+    public function up(): void
     {
-        $this->createTable(self::TABLE_STATUSES, [
+        $this->createTable(MigrationConstants::TABLE_STATUSES, [
             'id' => $this->smallInteger()->unsigned()->notNull() . ' AUTO_INCREMENT PRIMARY KEY',
             'key' => $this->string(100)->notNull()->unique(),
             'label' => $this->string(100)->notNull(),
         ]);
 
         $this->batchInsert(
-            self::TABLE_STATUSES,
+            MigrationConstants::TABLE_STATUSES,
             ['key', 'label'],
             [
                 ['active', 'Active'],
@@ -22,8 +26,8 @@ class m170914_133248_install_status extends BaseMigration
         );
     }
 
-    public function down()
+    public function down(): void
     {
-        $this->dropTable(self::TABLE_STATUSES);
+        $this->dropTable(MigrationConstants::TABLE_STATUSES);
     }
 }

@@ -16,11 +16,16 @@ class BaseMigration extends Migration
     const AUDIT_CREATOR_FIELD = 'created_by';
     const AUDIT_UPDATER_FIELD = 'updated_by';
 
-    public function getTableEncoding()
+    public function getTableEncoding(): ?string
     {
         return ($this->db->driverName === 'mysql') ? MigrationConstants::MYSQL_TABLE_OPTIONS : null;
     }
 
+    /**
+     * @param string $table
+     * @param array $columns
+     * @param null $options
+     */
     public function createTable($table, $columns, $options = null)
     {
         $options = !is_null($options) ? $options : $this->getTableEncoding();
@@ -35,7 +40,7 @@ class BaseMigration extends Migration
      * @param $refColumn
      * @return string
      */
-    public function getForeignKeyConstraintName($sourceTable, $sourceColumn, $refTable, $refColumn)
+    public function getForeignKeyConstraintName($sourceTable, $sourceColumn, $refTable, $refColumn): string
     {
         return 'fk_' . $sourceTable . '_' . $refTable . '_' . $sourceColumn . '_' . $refColumn;
     }
@@ -43,8 +48,15 @@ class BaseMigration extends Migration
     /**
      * @inheritdoc
      */
-    public function addForeignKey($name, $table, $columns, $refTable, $refColumns = 'id', $delete = null, $update = null)
-    {
+    public function addForeignKey(
+        $name,
+        $table,
+        $columns,
+        $refTable,
+        $refColumns = 'id',
+        $delete = null,
+        $update = null
+    ) {
         $refColumnsName = is_array($refColumns) ? implode('_', $refColumns) : $refColumns;
         $columnsName = is_array($columns) ? implode('_', $columns) : $columns;
 
@@ -81,7 +93,7 @@ class BaseMigration extends Migration
             'updated_at' => $this->dateTime()->notNull(),
         ]);
 
-        if ($addAuditFields && $addAuditFields) {
+        if ($addAuditFields) {
             $this->addAuditFields($tableName, $auditTableName);
         }
     }
@@ -93,7 +105,7 @@ class BaseMigration extends Migration
      * @param bool $addForeignKeys
      * @param null $column
      */
-    public function addAuditFields($table, $refTable, $addForeignKeys = true, $column = null)
+    public function addAuditFields($table, string $refTable, $addForeignKeys = true, $column = null)
     {
         $column = is_null($column) ? $this->integer()->unsigned() : $column;
         $tempColumn = clone $column;
@@ -110,7 +122,7 @@ class BaseMigration extends Migration
      * @param $table
      * @param string $refTable
      */
-    public function addAuditColumnConstraints($table, $refTable)
+    public function addAuditColumnConstraints($table, string $refTable)
     {
         $this->addForeignKey(null, $table, self::AUDIT_CREATOR_FIELD, $refTable);
         $this->addForeignKey(null, $table, self::AUDIT_UPDATER_FIELD, $refTable);
@@ -121,7 +133,7 @@ class BaseMigration extends Migration
      * @param $table
      * @param string $refTable
      */
-    public function dropAuditFields($table, $refTable)
+    public function dropAuditFields($table, string $refTable)
     {
         $this->dropForeignKey(
             $this->getForeignKeyConstraintName(
@@ -147,11 +159,11 @@ class BaseMigration extends Migration
     }
 
     /**
-     * @author Olawale Lawal <wale@cottacush.com>
      * @param $role
      * @param array|string $permissions
+     * @author Olawale Lawal <wale@cottacush.com>
      */
-    public function grantPermission($role, $permissions)
+    public function grantPermission($role, array|string $permissions)
     {
         $query = new Query();
 
@@ -192,10 +204,10 @@ class BaseMigration extends Migration
 
     /**
      * Helps with revoking permissions
-     * @author Olawale Lawal <wale@cottacush.com>
      * @param array|string $permissions
+     * @author Olawale Lawal <wale@cottacush.com>
      */
-    public function revokePermission($permissions)
+    public function revokePermission(array|string $permissions)
     {
         $query = new Query();
 
